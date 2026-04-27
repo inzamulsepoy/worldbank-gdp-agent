@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>World Bank GDP Agent — CodingBolt</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2535;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #e8eaf0;
+    --muted: #8892a4;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --radius: 10px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 14px; min-height: 100vh; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  /* Layout */
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+  header .logo { font-size: 28px; }
+  header h1 { font-size: 20px; font-weight: 600; }
+  header span { font-size: 12px; color: var(--muted); margin-left: 8px; padding: 2px 8px; border: 0.5px solid var(--border2); border-radius: 99px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .card-title { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 5px 10px; border-radius: 6px; border: 0.5px solid var(--border); font-size: 12px; cursor: pointer; background: var(--bg3); color: var(--text); transition: all 0.15s; user-select: none; }
+  .chip:hover { border-color: var(--border2); }
+  .chip.active { background: rgba(59,130,246,0.15); border-color: var(--accent); color: var(--accent2); }
+
+  /* Form */
+  select, input[type=text] { width: 100%; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 13px; outline: none; transition: border 0.15s; }
+  select:focus, input:focus { border-color: var(--accent); }
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .form-row { display: flex; gap: 10px; }
+  .form-row > * { flex: 1; }
+
+  /* Run button */
+  .run-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
+  .run-btn:hover:not(:disabled) { background: #2563eb; transform: translateY(-1px); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Progress */
+  .progress-wrap { background: var(--bg3); border-radius: 99px; height: 5px; overflow: hidden; margin: 10px 0; }
+  .progress-bar { height: 5px; background: var(--accent); border-radius: 99px; transition: width 0.3s; width: 0%; }
+
+  /* Log */
+  .log { background: var(--bg); border: 0.5px solid var(--border); border-radius: 6px; padding: 10px 12px; height: 200px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .log-line { padding: 1.5px 0; display: flex; gap: 10px; }
+  .log-time { color: var(--muted); min-width: 65px; }
+  .log-ok   { color: var(--green); }
+  .log-err  { color: var(--red); }
+  .log-info { color: var(--muted); }
+  .log-fetch{ color: var(--accent2); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .stat { background: var(--bg3); border-radius: 8px; padding: 12px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border: 0.5px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--bg3); padding: 8px 10px; text-align: left; font-weight: 500; color: var(--muted); border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Files list */
+  .file-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 0.5px solid var(--border); }
+  .file-item:last-child { border-bottom: none; }
+  .file-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent2); }
+  .file-size { font-size: 11px; color: var(--muted); }
+  .dl-btn { padding: 4px 10px; background: rgba(59,130,246,0.15); border: 0.5px solid var(--accent); border-radius: 5px; color: var(--accent2); font-size: 11px; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+  .dl-btn:hover { background: rgba(59,130,246,0.3); }
+
+  /* Tag */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+  .tag-blue  { background: rgba(59,130,246,0.12); color: var(--accent2); }
+  .tag-green { background: rgba(34,197,94,0.12);  color: var(--green); }
+  .tag-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+
+  .hidden { display: none; }
+  .gap { margin-bottom: 1rem; }
+  .mt { margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="logo">🌍</span>
+    <h1>World Bank GDP Agent</h1>
+    <span>CodingBolt Agentic Workflow</span>
+  </header>
+
+  <!-- Step 1: Countries -->
+  <div class="card gap">
+    <div class="card-title">Step 1 — Select Countries</div>
+    <div class="chips" id="country-chips"></div>
+  </div>
+
+  <!-- Step 2: Indicators -->
+  <div class="card gap">
+    <div class="card-title">Step 2 — Select Indicators</div>
+    <div class="chips" id="indicator-chips"></div>
+  </div>
+
+  <!-- Step 3: Options -->
+  <div class="card gap">
+    <div class="card-title">Step 3 — Date Range & Format</div>
+    <div class="form-row">
+      <div><label>From Year</label><select id="from-year"></select></div>
+      <div><label>To Year</label><select id="to-year"></select></div>
+      <div><label>CSV Format</label>
+        <select id="format">
+          <option value="wide">Wide — one row per country/year</option>
+          <option value="long">Long — one row per indicator/year</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Run -->
+  <div class="card gap">
+    <div class="card-title">Step 4 — Run Agent</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="badges"></div>
+    <button class="run-btn" id="run-btn" onclick="runAgent()">▶  Fetch GDP Data from World Bank API</button>
+    <div class="progress-wrap mt"><div class="progress-bar" id="progress"></div></div>
+  </div>
+
+  <!-- Log -->
+  <div class="card gap hidden" id="log-card">
+    <div class="card-title">Agent Log</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card gap hidden" id="results-card">
+    <div class="card-title">Results</div>
+    <div class="stats" id="stats"></div>
+    <div class="table-wrap"><table id="preview"></table></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <a class="dl-btn" id="dl-link">↓ Download CSV</a>
+      <span style="font-size:12px;color:var(--muted);" id="file-info"></span>
+    </div>
+  </div>
+
+  <!-- Previous Files -->
+  <div class="card" id="files-card">
+    <div class="card-title">Previously Downloaded Files</div>
+    <div id="files-list"><span style="color:var(--muted);font-size:12px;">No files yet.</span></div>
+  </div>
+</div>
+
+<script>
+let CONFIG = { COUNTRIES: [], INDICATORS: [], DEFAULTS: {} };
+let selCountries  = new Set();
+let selIndicators = new Set();
+
+async function init() {
+  CONFIG = await fetch("/api/config").then(r => r.json());
+  CONFIG.DEFAULTS.countries.forEach(c => selCountries.add(c));
+  CONFIG.DEFAULTS.indicators.forEach(i => selIndicators.add(i));
+  buildCountries();
+  buildIndicators();
+  buildYears();
+  updateBadges();
+  loadFiles();
+}
+
+function buildCountries() {
+  const el = document.getElementById("country-chips");
+  el.innerHTML = CONFIG.COUNTRIES.map(c => `
+    <div class="chip ${selCountries.has(c.code)?'active':''}" onclick="toggle('country','${c.code}',this)">
+      ${c.flag} ${c.name}
+    </div>`).join("");
+}
+function buildIndicators() {
+  const el = document.getElementById("indicator-chips");
+  el.innerHTML = CONFIG.INDICATORS.map(i => `
+    <div class="chip ${selIndicators.has(i.id)?'active':''}" onclick="toggle('indicator','${i.id}',this)" title="${i.desc}">
+      ${i.name}
+    </div>`).join("");
+}
+function buildYears() {
+  const from = document.getElementById("from-year");
+  const to   = document.getElementById("to-year");
+  for(let y = 2024; y >= 1990; y--) {
+    from.innerHTML += `<option value="${y}" ${y===CONFIG.DEFAULTS.fromYear?'selected':''}>${y}</option>`;
+    to.innerHTML   += `<option value="${y}" ${y===CONFIG.DEFAULTS.toYear?'selected':''}>${y}</option>`;
+  }
+}
+function toggle(type, val, el) {
+  const set = type==='country' ? selCountries : selIndicators;
+  if(set.has(val)) { if(set.size > 1) { set.delete(val); el.classList.remove('active'); } }
+  else { set.add(val); el.classList.add('active'); }
+  updateBadges();
+}
+function updateBadges() {
+  const from = document.getElementById("from-year").value;
+  const to   = document.getElementById("to-year").value;
+  document.getElementById("badges").innerHTML = `
+    <span class="tag tag-blue">${selCountries.size} countr${selCountries.size===1?'y':'ies'}</span>
+    <span class="tag tag-green">${selIndicators.size} indicator${selIndicators.size===1?'':'s'}</span>
+    <span class="tag tag-amber">${from}–${to}</span>
+  `;
+}
+document.addEventListener("DOMContentLoaded", ()=> {
+  document.getElementById("from-year").addEventListener("change", updateBadges);
+  document.getElementById("to-year").addEventListener("change", updateBadges);
+});
+
+function addLog(msg, type="info") {
+  const card = document.getElementById("log-card");
+  card.classList.remove("hidden");
+  const box = document.getElementById("log");
+  const t = new Date().toLocaleTimeString("en-US",{hour12:false});
+  box.innerHTML += `<div class="log-line"><span class="log-time">${t}</span><span class="log-${type}">${msg}</span></div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById("progress").style.width = pct + "%";
+}
+
+async function runAgent() {
+  const btn = document.getElementById("run-btn");
+  btn.disabled = true;
+  document.getElementById("results-card").classList.add("hidden");
+  document.getElementById("log").innerHTML = "";
+  document.getElementById("log-card").classList.remove("hidden");
+  setProgress(0);
+
+  const body = {
+    countryCodes:  [...selCountries],
+    indicatorIds:  [...selIndicators],
+    fromYear:      parseInt(document.getElementById("from-year").value),
+    toYear:        parseInt(document.getElementById("to-year").value),
+    format:        document.getElementById("format").value,
+  };
+
+  addLog(`Agent started — ${body.countryCodes.length} countries × ${body.indicatorIds.length} indicators`, "info");
+  addLog("Connecting to World Bank Open Data API v2...", "fetch");
+
+  const res = await fetch("/api/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let total = 1;
+
+  while(true) {
+    const { done, value } = await reader.read();
+    if(done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop();
+    for(const part of parts) {
+      if(!part.startsWith("data:")) continue;
+      const evt = JSON.parse(part.slice(5).trim());
+      if(evt.type === "start") { total = evt.total; }
+      else if(evt.type === "progress") {
+        setProgress(Math.round((evt.done / total) * 100));
+        addLog(`${evt.flag} ${evt.country} — ${evt.indicator} (${evt.rows} records)`, "ok");
+      }
+      else if(evt.type === "error") {
+        addLog(`✗ ${evt.country} — ${evt.indicator}: ${evt.message}`, "err");
+      }
+      else if(evt.type === "done") {
+        setProgress(100);
+        addLog(`Done — ${evt.totalRecords.toLocaleString()} records, ${evt.csvRows.toLocaleString()} CSV rows`, "ok");
+        showResults(evt);
+        btn.disabled = false;
+        loadFiles();
+      }
+    }
+  }
+}
+
+function showResults(evt) {
+  const card = document.getElementById("results-card");
+  card.classList.remove("hidden");
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="stat-val">${evt.totalRecords.toLocaleString()}</div><div class="stat-lbl">Data points</div></div>
+    <div class="stat"><div class="stat-val">${evt.csvRows.toLocaleString()}</div><div class="stat-lbl">CSV rows</div></div>
+    <div class="stat"><div class="stat-val">${document.getElementById("from-year").value}–${document.getElementById("to-year").value}</div><div class="stat-lbl">Year range</div></div>
+    <div class="stat"><div class="stat-val">${evt.errors}</div><div class="stat-lbl">Errors</div></div>
+  `;
+  const link = document.getElementById("dl-link");
+  link.href = `/api/download/${evt.csvFile}`;
+  link.download = evt.csvFile;
+  document.getElementById("file-info").textContent = evt.csvFile;
+}
+
+async function loadFiles() {
+  const files = await fetch("/api/files").then(r => r.json());
+  const el = document.getElementById("files-list");
+  if(!files.length) { el.innerHTML = '<span style="color:var(--muted);font-size:12px;">No files yet.</span>'; return; }
+  el.innerHTML = files.map(f => `
+    <div class="file-item">
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${(f.size/1024).toFixed(1)} KB</span>
+      <a class="dl-btn" href="/api/download/${f.name}" download="${f.name}">↓ Download</a>
+    </div>`).join("");
+}
+
+init();
+</script>
+</body>
+</html>
