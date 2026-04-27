@@ -97,6 +97,59 @@ One row per country/indicator/year:
 
 ---
 
+## 🛠️ Tech Stack
+
+### Runtime & Language
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| Node.js | ≥ 18.x | JavaScript runtime |
+| JavaScript (ES6+) | — | No TypeScript, no build step |
+
+### Backend
+| Technology | Purpose |
+|-----------|---------|
+| Express.js | Web server for browser UI mode |
+| Server-Sent Events (SSE) | Real-time agent progress streaming to browser |
+| Node.js `fs` module | File writing for CSV and metadata |
+
+### Frontend
+| Technology | Purpose |
+|-----------|---------|
+| Plain HTML + CSS + Vanilla JS | Zero frameworks, zero build tooling |
+| Inter + JetBrains Mono | Fonts via Google Fonts |
+| CSS Variables | Dark theme, fully customisable |
+
+### CLI
+| Package | Purpose |
+|---------|---------|
+| `inquirer` | Interactive terminal prompts — checkboxes, lists, inputs |
+| `chalk` | Colored terminal output |
+| `ora` | Terminal spinner for live feedback |
+
+### Data Fetching
+| Technology | Purpose |
+|-----------|---------|
+| `axios` | HTTP client with timeout + exponential backoff retry |
+| World Bank Open Data API v2 | Free public REST API — no API key required |
+
+### CSV & Output
+| Technology | Purpose |
+|-----------|---------|
+| Custom CSV builder | Wide and long format with proper value escaping |
+| `.meta.json` sidecar | Metadata per run — countries, indicators, timestamps, error count |
+
+### Dev Tooling
+| Package | Purpose |
+|---------|---------|
+| `open` | Auto-opens browser when UI server starts |
+| `npm` | Package manager |
+| `.gitignore` | Excludes `node_modules/` and `output/` |
+
+> **No database. No auth. No frontend framework. No build tool.**
+> Intentionally lean — runs anywhere Node.js is installed.
+
+---
+
 ## ⚙️ Customisation
 
 Edit `src/config.js` to:
@@ -115,4 +168,3 @@ Base URL: `https://api.worldbank.org/v2`
 ---
 
 *Built by CodingBolt*
-# worldbank-gdp-agent
